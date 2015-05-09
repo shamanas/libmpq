@@ -23,6 +23,8 @@
 
 #ifdef _MSC_VER
   #define fseeko _fseeki64
+#elif defined(__MINGW32__)
+  #define fseeko fseeko64
 #endif
 
 #endif								/* _PLATFORM_H */

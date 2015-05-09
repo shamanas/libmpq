@@ -28,6 +28,9 @@
 /* libmpq generic includes. */
 #include "common.h"
 
+/* fseeko fixes. */
+#include "platform.h"
+
 /* generic includes. */
 #include <fcntl.h>
 #include <stdlib.h>
@@ -135,6 +138,11 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			} else {
 				continue;
 			}
+		}
+
+		if (fread(&(*mpq_archive)->mpq_header, 1, sizeof(mpq_header_s), (*mpq_archive)->fp) != sizeof(mpq_header_s)) {
+			result = LIBMPQ_ERROR_FORMAT;
+			goto error;
 		}
 
 		if ((*mpq_archive)->mpq_header.mpq_magic == LIBMPQ_HEADER) {
