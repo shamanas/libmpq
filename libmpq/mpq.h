@@ -94,6 +94,10 @@ extern LIBMPQ_API int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive,
 extern LIBMPQ_API int32_t libmpq__block_size_unpacked(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, libmpq__off_t *unpacked_size);
 extern LIBMPQ_API int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint8_t *out_buf, libmpq__off_t out_size, libmpq__off_t *transferred);
 
+/* user data processing functions. */
+extern LIBMPQ_API int32_t libmpq__user_data_read(mpq_archive_s *mpq_archive, char *out_buf);
+extern LIBMPQ_API int32_t libmpq__user_data_size(mpq_archive_s *mpq_archive, libmpq__off_t *size);
+
 #ifdef __cplusplus
 }
 #endif

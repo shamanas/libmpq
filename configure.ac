@@ -54,7 +54,8 @@ AC_CHECK_LIB([z], [inflateEnd], [], [AC_MSG_ERROR([*** inflateEnd is required, i
 
 # check for bzlib2 library.
 AC_CHECK_HEADER([bzlib.h], [], [AC_MSG_ERROR([*** bzlib.h is required, install bzip2 header files])])
-AC_CHECK_LIB([bz2], [BZ2_bzDecompressInit], [], [AC_MSG_ERROR([*** BZ2_bzDecompressInit is required, install bzip2 library files])])
+# Rely on the user, it seems that function is not found (at least on my system) on mingw32
+# AC_CHECK_LIB([bz2], [BZ2_bzDecompressInit], [], [AC_MSG_ERROR([*** BZ2_bzDecompressInit is required, install bzip2 library files])])
 
 # When we're running gcc 4 or greater, compile with -fvisibility=hidden.
 AC_TRY_COMPILE([

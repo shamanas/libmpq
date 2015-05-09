@@ -31,6 +31,7 @@
 
 /* define generic mpq archive information. */
 #define LIBMPQ_HEADER				0x1A51504D	/* mpq archive header ('MPQ\x1A') */
+#define LIBMPQ_USER_DATA_HEADER     0x1B51504D  /* mpq user data header ('MPQ\x1B') */
 
 /* define the known archive versions. */
 #define LIBMPQ_ARCHIVE_VERSION_ONE		0		/* version one used until world of warcraft. */
@@ -83,6 +84,14 @@ typedef struct {
 	uint16_t	block_table_offset_high;/* upper 16 bits of the block table offset for large archives.*/
 } PACK_STRUCT mpq_header_ex_s;
 
+/* mpq user data header. */
+typedef struct {
+	uint32_t mpq_user_header_magic; /* the 0x1B51504D ('MPQ\x1B') signature. */
+	uint32_t user_data_size; /* size of the user data the header contains. */
+	uint32_t mpq_header_offset; /* offset to the beginning of the user data header, relative to the beginning of the archive. */
+	uint32_t header_size; /* size of the user data header. */
+} PACK_STRUCT mpq_user_data_header_s;
+
 /* hash entry, all files in the archive are searched by their hashes. */
 typedef struct {
 	uint32_t	hash_a;			/* the first two uint32_ts are the encrypted file. */
@@ -130,6 +139,8 @@ struct mpq_archive {
 	off_t		archive_offset;		/* absolute start position of archive. */
 
 	/* archive related buffers and tables. */
+	mpq_user_data_header_s mpq_user_data_header; /* mpq user data header. */
+	char *user_data;                /* user data, if any. */
 	mpq_header_s	mpq_header;		/* mpq file header. */
 	mpq_header_ex_s	mpq_header_ex;		/* mpq extended file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */

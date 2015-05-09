@@ -74,6 +74,7 @@ const char *libmpq__strerror(int32_t returncode) {
 int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, libmpq__off_t archive_offset) {
 
 	/* some common variables. */
+	uint32_t tried_data     = 0;
 	uint32_t i              = 0;
 	uint32_t count          = 0;
 	int32_t result          = 0;
@@ -101,6 +102,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	/* assign some default values. */
 	(*mpq_archive)->mpq_header.mpq_magic = 0;
 	(*mpq_archive)->files                = 0;
+	(*mpq_archive)->user_data            = NULL;
 
 	/* loop through file and search for mpq signature. */
 	while (TRUE) {
@@ -116,17 +118,26 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			goto error;
 		}
 
-		/* read header from file. */
-		if (fread(&(*mpq_archive)->mpq_header, 1, sizeof(mpq_header_s), (*mpq_archive)->fp) != sizeof(mpq_header_s)) {
+		/* read user data header from file. */
+		if (!tried_data) {
+			tried_data = 1;
+			if(fread(&(*mpq_archive)->mpq_user_data_header, 1, sizeof(mpq_user_data_header_s), (*mpq_archive)->fp) != sizeof(mpq_user_data_header_s)) {
 
-			/* no valid mpq archive. */
-			result = LIBMPQ_ERROR_FORMAT;
-			goto error;
+				/* no valid mpq archive. */
+				result = LIBMPQ_ERROR_FORMAT;
+				goto error;
+			}
+
+			/* check if we found a valid mpq user data header. */
+			if ((*mpq_archive)->mpq_user_data_header.mpq_user_header_magic == LIBMPQ_USER_DATA_HEADER) {
+				(*mpq_archive)->user_data = malloc((*mpq_archive)->mpq_user_data_header.user_data_size);
+				fread((*mpq_archive)->user_data, 1, (*mpq_archive)->mpq_user_data_header.user_data_size, (*mpq_archive)->fp);
+			} else {
+				continue;
+			}
 		}
 
-		/* check if we found a valid mpq header. */
 		if ((*mpq_archive)->mpq_header.mpq_magic == LIBMPQ_HEADER) {
-
 			/* check if we process old mpq archive version. */
 			if ((*mpq_archive)->mpq_header.version == LIBMPQ_ARCHIVE_VERSION_ONE) {
 
@@ -314,6 +325,7 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	}
 
 	/* free header, tables and list. */
+	if(mpq_archive->user_data != NULL) free(mpq_archive->user_data);
 	free(mpq_archive->mpq_map);
 	free(mpq_archive->mpq_file);
 	free(mpq_archive->mpq_hash);
@@ -1008,5 +1020,23 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 	}
 
 	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+int32_t libmpq__user_data_read(mpq_archive_s *mpq_archive, char *out_buf) {
+	if(mpq_archive->user_data) {
+		memcpy(out_buf, mpq_archive->user_data, mpq_archive->mpq_user_data_header.user_data_size);
+	}
+
+	return LIBMPQ_SUCCESS;
+}
+
+int32_t libmpq__user_data_size(mpq_archive_s *mpq_archive, libmpq__off_t *size) {
+	if(!mpq_archive->user_data) {
+		*size = 0;
+	} else {
+		*size = mpq_archive->mpq_user_data_header.user_data_size;
+	}
+
 	return LIBMPQ_SUCCESS;
 }
